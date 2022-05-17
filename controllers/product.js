@@ -1,10 +1,11 @@
+const { populate } = require('../models/product')
 const Product = require('../models/product')
 
 exports.createProduct = async (req, res) => {
     //return console.log(req.body)
-    const { title, description, photo, author, price, category, } = req.body
+    const { quantity, title, description, photo, author, price, category, } = req.body
 
-    if (!title || !description || !photo || !price || !category || !author) {
+    if (!quantity || !title || !description || !photo || !price || !category || !author) {
         return res.status(422).json({ error: "Please fill up all fields" })
 
 
@@ -27,7 +28,7 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const updatedProduct = await Product.findByIdAndUpdate(req.params.productId, { $set: req.body }, { new: true })
-        res.status(200).json({ updatedProduct, message: `Product '${updatedProduct.title}' succesfully created` })
+        res.status(200).json({ updatedProduct, message: `Product '${updatedProduct.title}' succesfully updated` })
     } catch (err) {
         res.status(500).json({ error: 'Product update error ' + err })
 
@@ -38,14 +39,85 @@ exports.updateProduct = async (req, res) => {
 }
 
 exports.getAllProducts = async (req, res) => {
+
     try {
-        const allProducts = await Product.find()
-        res.status(200).json(allProducts)
+        const byOrder = req.query.byOrder
+        const byAuthor = req.query.author
+        const bySold = req.query.bySold
+        const byPrice = req.query.price
+        const byTitle = req.query.title
+        const byCategories = req.query.category
+        let books
+
+        if (byAuthor) {
+            books = await Product.find({ author: byAuthor })
+                .populate("category")
+                .sort({ createdAt: -1 })
+        }
+        else if (bySold) {
+            books = await Product.find()
+                .populate("category")
+                .sort([[bySold, byOrder]])
+                .limit(2)
+
+
+
+
+
+        }
+        else if (byCategories) {
+            books = await Product.find({ category: byCategories })
+                .populate('category')
+
+        }
+        else if (byTitle) {
+            books = await Product.find({ title: byTitle })
+                .populate("category")
+                .sort({ createdAt: -1 })
+
+        }
+        else if (byPrice) {
+            books = await Product.find({
+                byPrice: {
+                    $gte: byPrice[0],
+                    $lte: byPrice[1]
+                }
+            })
+                .populate('category')
+
+        }
+        else {
+            books = await Product.find()
+                .populate("category")
+                .sort({ createdAt: -1 })
+        }
+        res.status(200).json(books)
     } catch (err) {
-        res.status(500).json({ error: "Error loading products " + err })
+        res.status(500).json({ error: 'Filtering books error ' + err })
     }
 
+
+
+
 }
+
+exports.getRelated = async (req, res) => {
+    try {
+        const book = await Product.findById(req.params.productId)
+            .populate('category')
+
+        const related = await Product.find({
+            _id: { $ne: book._id },
+            category: book.category
+        })
+            .populate("category")
+            .limit(4)
+        res.json(related)
+    } catch (err) {
+        res.status(500).json({ error: "Related product filtering error " + err })
+    }
+}
+
 exports.getProduct = async (req, res) => {
     try {
         const singleProduct = await Product.findById(req.params.productId)

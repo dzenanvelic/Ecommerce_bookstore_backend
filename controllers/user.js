@@ -17,3 +17,15 @@ exports.getUser = async (req, res) => {
         res.status(500).json({ error: "User finding error " + err })
     }
 }
+exports.getUsers = async (req, res) => {
+
+    try {
+        const users = await User.find()
+        if (!users) {
+            return res.status(400).json({ error: "There is no users inside database!" })
+        }
+        res.status(200).json(users)
+    } catch (err) {
+        res.status(500).json({ error: "Finding useres error " + err })
+    }
+}

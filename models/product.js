@@ -7,7 +7,7 @@ const productSchema = new mongoose.Schema({
         type: String,
         trim: true,
         required: true,
-        maxlength: 32,
+        maxlength: 52,
 
     },
     description: {
@@ -33,10 +33,18 @@ const productSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    quantity: {
+        type: Number,
+        required: true
+    },
     author: {
         type: String,
         required: true,
         maxlength: 32
+    },
+    sold: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true })
 
